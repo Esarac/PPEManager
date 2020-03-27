@@ -46,6 +46,7 @@ public class ControlMenu implements Initializable{
 	public final static String EDIT_SYMBOL="...";
 	public final static String DONE_SYMBOL="\u2714";
 	public final static String MARKED_SYMBOL="!";
+	public final static String TIMELINE_SYMBOL="\u23F3";
 	
 	public final static String ICONS_PATH="med/icon/category/";
 	public final static String DEFAULT_ICONS_PATH="med/icon/default/";
@@ -201,9 +202,158 @@ public class ControlMenu implements Initializable{
 		//~...
 		header.getChildren().addAll(back,ppeName,edit);
 		//...
+		
+		//Example
+		information=new VBox();
+		information.setSpacing(10);
+		information.setAlignment(Pos.CENTER);
+		pane.getChildren().add(0, information);
+		
+		//~Initial Value
+		HBox intialValue=new HBox();
+		intialValue.setSpacing(10);
+		intialValue.setAlignment(Pos.CENTER);
+		information.getChildren().add(intialValue);
+		//---
+		intialValue.getChildren().add(new Label("Valor Inicial:"));
+		//---
+		Label intialValueVar=new Label("$"+480000);
+		intialValue.getChildren().add(intialValueVar);
+		//~...
+		
+		//~Accumulated Depreciation
+		HBox accumulatedDepreciation=new HBox();
+		accumulatedDepreciation.setSpacing(10);
+		accumulatedDepreciation.setAlignment(Pos.CENTER);
+		information.getChildren().add(accumulatedDepreciation);
+		//---
+		accumulatedDepreciation.getChildren().add(new Label("Depreciacion Acumulada:"));
+		//---
+		Label accumulatedDepreciationVar=new Label("($"+307200+")");
+		accumulatedDepreciation.getChildren().add(accumulatedDepreciationVar);
+		//~...
+		
+		//~Net Value
+		HBox netValue=new HBox();
+		netValue.setSpacing(10);
+		netValue.setAlignment(Pos.CENTER);
+		information.getChildren().add(netValue);
+		//---
+		netValue.getChildren().add(new Label("Valor Neto:"));
+		//---
+		Label netValueVar=new Label("$"+172800);
+		netValue.getChildren().add(netValueVar);
+		//~...
+		
+		
+		//~Entrusted
+		HBox entrusted=new HBox();
+		entrusted.setSpacing(10);
+		entrusted.setAlignment(Pos.CENTER);
+		information.getChildren().add(entrusted);
+		//---
+		entrusted.getChildren().add(new Label("Encargado:"));
+		//---
+		Label entrustedVar=new Label("Mateo Valdes");
+		entrusted.getChildren().add(entrustedVar);
+		//~...
+		
+		//~Date
+		HBox date=new HBox();
+		date.setSpacing(10);
+		date.setAlignment(Pos.CENTER);
+		information.getChildren().add(date);
+		//---
+		date.getChildren().add(new Label("Dia Comprado:"));
+		//---
+		Label dateVar=new Label("9 de Noviembre del 2020");
+		date.getChildren().add(dateVar);
+		//~...
+		
+		//~Life Span
+		HBox lifespan=new HBox();
+		lifespan.setSpacing(10);
+		lifespan.setAlignment(Pos.CENTER);
+		information.getChildren().add(lifespan);
+		//---
+		lifespan.getChildren().add(new Label("Vida Util:"));
+		//---
+		Label lifespanVar=new Label("25 meses");
+		lifespan.getChildren().add(lifespanVar);
+		//~...
+		
+		//~Description
+		VBox description=new VBox();
+		description.setSpacing(10);
+		description.setAlignment(Pos.CENTER);
+		information.getChildren().add(description);
+		//---
+		description.getChildren().add(new Label("Descripcion:"));
+		//---
+		Label descriptionVar=new Label("Mantener en sitios frios");
+		description.getChildren().add(descriptionVar);
+		//~...
+		
+		//~Description
+		Button timeline=new Button(TIMELINE_SYMBOL);
+		information.getChildren().add(timeline);
+		timeline.setOnMouseClicked(event->{
+			generateTimeline();
+		});
+		//~...
+		//...
+		
+	}
+	
+	public void generateTimeline() {//Example
+		header.getChildren().clear();
+		list.getItems().clear();
+		pane.getChildren().remove(information);
+		if(itemMenu!=null){itemMenu.hide();}
+		
+		header.setAlignment(Pos.CENTER);
+		
+		//HEADER
+		//~Back
+		Button back=new Button(BACK_SYMBOL);
+		back.setOnMouseClicked(event->{
+			generate();
+		});
+		//~...
+		//~Console Name
+		Label categoryName=new Label(identifiers[1].toString());
+		categoryName.getStyleClass().add("title");
+		//~...
+		Label empty=new Label("");
+		header.getChildren().addAll(back,categoryName,empty);
+		//...
+		
+		for(int m=35; m>=0; m--){
+			int money=(int)((480000)*((double)m/35));
+			
+			int month=11+(35-m);
+			
+			int year=18;
+			while(month>12) {
+				year+=1;
+				month-=12;
+			}
+			
+			HBox itemBox=new HBox();
+			itemBox.setSpacing(10);
+			itemBox.setAlignment(Pos.CENTER);
+			itemBox.getStyleClass().add("item-box");
+			
+			itemBox.getChildren().addAll(new Label("1/"+month+"/"+year), new Label(), new Label("$"+money));
+			list.getItems().add(itemBox);
+		}
 	}
 	
 	//Supporters
+	public void editPPE() {
+		
+	}
+	
 	public void saveData(Stage stage){
 		stage.setOnCloseRequest(event -> {
 			
@@ -217,6 +367,9 @@ public class ControlMenu implements Initializable{
 		});
 		
 		HBox itemBox=new HBox();
+		itemBox.setSpacing(10);
+		itemBox.setAlignment(Pos.CENTER);
+		
 		TextField itemName=new TextField();
 		itemBox.getChildren().add(itemName);
 		list.getItems().add(itemBox);
@@ -254,7 +407,7 @@ public class ControlMenu implements Initializable{
 	public HBox generateItemBox(String itemName, String imgPath,String defaultImgPath){
 		HBox itemBox=new HBox();
 		itemBox.setSpacing(10);
-		itemBox.setAlignment(Pos.CENTER_LEFT);
+		itemBox.setAlignment(Pos.CENTER);
 		itemBox.getStyleClass().add("item-box");
 		
 		//Image
