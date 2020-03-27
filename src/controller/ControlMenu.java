@@ -47,6 +47,7 @@ public class ControlMenu implements Initializable{
 	public final static String DONE_SYMBOL="\u2714";
 	public final static String MARKED_SYMBOL="!";
 	public final static String TIMELINE_SYMBOL="\u23F3";
+	public final static String SEARCH_SYMBOL="\u26B2";
 	
 	public final static String ICONS_PATH="med/icon/category/";
 	public final static String DEFAULT_ICONS_PATH="med/icon/default/";
@@ -75,10 +76,7 @@ public class ControlMenu implements Initializable{
 		list.getItems().clear();
 		pane.getChildren().remove(information);
 		if(itemMenu!=null){itemMenu.hide();}
-		
 		header.setAlignment(Pos.CENTER);
-		
-		
 		
 		if(identifiers[1]!=null){//PPE
 			generatePPE();
@@ -94,9 +92,25 @@ public class ControlMenu implements Initializable{
 	public void generateAccountant() {
 		
 		//HEADER
-		//~APP NAME
-		Label space=new Label();
+		//~SEARCH
+		Button search=new Button(SEARCH_SYMBOL);
+		search.setOnMouseClicked(event->{
+			TextField searchBar=new TextField();
+			searchBar.setPromptText("buscar");
+			header.getChildren().set(1, searchBar);
+			
+			search.setOnMouseClicked(kEvent->{
+				generate();
+			});
+			searchBar.setOnKeyPressed(kEvent->{
+        		if(kEvent.getCode().equals(KeyCode.ENTER)){
+        			generate();
+        		}
+        	});
+		});
+		//~...
 		
+		//~APP NAME
 		Label accountantName=new Label("Empresa Farmaceutica Ossim");
 		accountantName.getStyleClass().add("title");
 		//~...
@@ -115,7 +129,7 @@ public class ControlMenu implements Initializable{
         	});
 		});
 		//~...
-		header.getChildren().addAll(space,accountantName, add);
+		header.getChildren().addAll(search,accountantName, add);
 		//...
 		
 		//Example
@@ -149,14 +163,7 @@ public class ControlMenu implements Initializable{
 		//~Add
 		Button add=new Button(ADD_SYMBOL);
 		add.setOnMouseClicked(event->{
-			
-			TextField ppeName=onActionAddButton(add);
-			ppeName.setOnKeyPressed(kEvent->{
-        		
-        		if(kEvent.getCode().equals(KeyCode.ENTER)){
-        			generate();
-        		}
-        	});
+			generatePPEEditor();
 		});
 		//~...
 		header.getChildren().addAll(back,categoryName,add);
@@ -191,13 +198,10 @@ public class ControlMenu implements Initializable{
 		Label ppeName=new Label(identifiers[1].toString());
 		ppeName.getStyleClass().add("title");
 		//...
-		//~Add
+		//~Edit
 		Button edit=new Button(EDIT_SYMBOL);
 		edit.setOnMouseClicked(event->{
-			edit.setText(DONE_SYMBOL);
-			edit.setOnMouseClicked(mEvent->{
-				generate();
-			});
+			generatePPEEditor();
 		});
 		//~...
 		header.getChildren().addAll(back,ppeName,edit);
@@ -294,7 +298,7 @@ public class ControlMenu implements Initializable{
 		description.getChildren().add(descriptionVar);
 		//~...
 		
-		//~Description
+		//~Time Line
 		Button timeline=new Button(TIMELINE_SYMBOL);
 		information.getChildren().add(timeline);
 		timeline.setOnMouseClicked(event->{
@@ -305,12 +309,144 @@ public class ControlMenu implements Initializable{
 		
 	}
 	
+	public void generatePPEEditor() {//Example
+		header.getChildren().clear();
+		list.getItems().clear();
+		pane.getChildren().remove(information);
+		if(itemMenu!=null){itemMenu.hide();}
+		header.setAlignment(Pos.CENTER);
+		
+		//HEADER
+		//~Back
+		Button back=new Button(BACK_SYMBOL);
+		back.setOnMouseClicked(event->{
+			identifiers[1]=null;
+			generate();
+		});
+		//~...
+		//~Game Name
+		TextField ppeName=new TextField();
+		ppeName.getStyleClass().add("title");
+		//...
+		//~Add
+		Button edit=new Button(DONE_SYMBOL);
+		edit.setOnMouseClicked(event->{
+			generate();
+		});
+		//~...
+		header.getChildren().addAll(back,ppeName,edit);
+		//...
+		
+		//Example
+		information=new VBox();
+		information.setSpacing(10);
+		information.setAlignment(Pos.CENTER);
+		pane.getChildren().add(0, information);
+		
+		//~Initial Value
+		HBox intialValue=new HBox();
+		intialValue.setSpacing(10);
+		intialValue.setAlignment(Pos.CENTER);
+		information.getChildren().add(intialValue);
+		//---
+		intialValue.getChildren().add(new Label("Valor Inicial:"));
+		//---
+		TextField intialValueVar=new TextField();
+		intialValue.getChildren().add(intialValueVar);
+		//~...
+		
+		//~Accumulated Depreciation
+		HBox accumulatedDepreciation=new HBox();
+		accumulatedDepreciation.setSpacing(10);
+		accumulatedDepreciation.setAlignment(Pos.CENTER);
+		information.getChildren().add(accumulatedDepreciation);
+		//---
+		accumulatedDepreciation.getChildren().add(new Label("Depreciacion Acumulada:"));
+		//---
+		TextField accumulatedDepreciationVar=new TextField();
+		accumulatedDepreciation.getChildren().add(accumulatedDepreciationVar);
+		//~...
+		
+		//~Net Value
+		HBox netValue=new HBox();
+		netValue.setSpacing(10);
+		netValue.setAlignment(Pos.CENTER);
+		information.getChildren().add(netValue);
+		//---
+		netValue.getChildren().add(new Label("Valor Neto:"));
+		//---
+		TextField netValueVar=new TextField();
+		netValue.getChildren().add(netValueVar);
+		//~...
+		
+		
+		//~Entrusted
+		HBox entrusted=new HBox();
+		entrusted.setSpacing(10);
+		entrusted.setAlignment(Pos.CENTER);
+		information.getChildren().add(entrusted);
+		//---
+		entrusted.getChildren().add(new Label("Encargado:"));
+		//---
+		TextField entrustedVar=new TextField();
+		entrusted.getChildren().add(entrustedVar);
+		//~...
+		
+		//~Date
+		HBox date=new HBox();
+		date.setSpacing(10);
+		date.setAlignment(Pos.CENTER);
+		information.getChildren().add(date);
+		//---
+		date.getChildren().add(new Label("Dia Comprado:"));
+		//---
+		TextField dateVar=new TextField();
+		date.getChildren().add(dateVar);
+		//~...
+		
+		//~Life Span
+		HBox lifespan=new HBox();
+		lifespan.setSpacing(10);
+		lifespan.setAlignment(Pos.CENTER);
+		information.getChildren().add(lifespan);
+		//---
+		lifespan.getChildren().add(new Label("Vida Util:"));
+		//---
+		TextField lifespanVar=new TextField();
+		lifespan.getChildren().add(lifespanVar);
+		//~...
+		
+		//~Description
+		VBox description=new VBox();
+		description.setSpacing(10);
+		description.setAlignment(Pos.CENTER);
+		information.getChildren().add(description);
+		//---
+		description.getChildren().add(new Label("Descripcion:"));
+		//---
+		TextField descriptionVar=new TextField();
+		description.getChildren().add(descriptionVar);
+		//~...
+		
+		if(identifiers[1]!=null){
+			ppeName.setText("Centrifuga");
+			intialValueVar.setText("480000");
+			accumulatedDepreciationVar.setText("307200");
+			netValueVar.setText("172800");
+			entrustedVar.setText("Mateo Valdes");
+			dateVar.setText("9 de Noviembre del 2020");
+			lifespanVar.setText("25");
+			descriptionVar.setText("Mantener en sitios frios");
+		}
+		//...
+				
+	}
+	
 	public void generateTimeline() {//Example
 		header.getChildren().clear();
 		list.getItems().clear();
 		pane.getChildren().remove(information);
 		if(itemMenu!=null){itemMenu.hide();}
-		
 		header.setAlignment(Pos.CENTER);
 		
 		//HEADER
@@ -328,10 +464,10 @@ public class ControlMenu implements Initializable{
 		header.getChildren().addAll(back,categoryName,empty);
 		//...
 		
-		for(int m=35; m>=0; m--){
-			int money=(int)((480000)*((double)m/35));
+		for(int m=25; m>=0; m--){
+			int money=(int)((480000)*((double)m/25));
 			
-			int month=11+(35-m);
+			int month=11+(25-m);
 			
 			int year=18;
 			while(month>12) {
