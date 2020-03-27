@@ -1,7 +1,5 @@
 package view;
 
-import java.io.IOException;
-
 import controller.ControlMenu;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -19,7 +17,7 @@ public class Main extends Application{
 			Parent root = (Parent) loader.load();
 			root.getStylesheets().add(getClass().getResource("Style.css").toExternalForm());//CSS
 			primaryStage.getIcons().add(new Image("file:../../med/icon/Logo.png"));
-			primaryStage.setTitle("Game Progress");
+			primaryStage.setTitle("PPE Manager");
 			primaryStage.setScene(new Scene(root, 800, 600));
 			primaryStage.show();
 			

@@ -43,10 +43,11 @@ public class ControlMenu implements Initializable{
 	public final static String BACK_SYMBOL="«";
 	public final static String ADD_SYMBOL="+";
 	public final static String MINIMIZE_SYMBOL="-";
-	public final static String SAVE_SYMBOL="\u2BC2";
+	public final static String EDIT_SYMBOL="...";
+	public final static String DONE_SYMBOL="\u2714";
 	public final static String MARKED_SYMBOL="!";
 	
-	public final static String ICONS_PATH="med/icon/consoles/";
+	public final static String ICONS_PATH="med/icon/category/";
 	public final static String DEFAULT_ICONS_PATH="med/icon/default/";
 	
 	//Attributes
@@ -78,11 +79,11 @@ public class ControlMenu implements Initializable{
 		
 		
 		
-		if(identifiers[1]==null){//PPE
-			
+		if(identifiers[1]!=null){//PPE
+			generatePPE();
 		}
-		else if(identifiers[0]==null) {//Category
-			
+		else if(identifiers[0]!=null) {//Category
+			generateCategory();
 		}
 		else{//Accountant
 			generateAccountant();
@@ -90,15 +91,116 @@ public class ControlMenu implements Initializable{
 	}
 
 	public void generateAccountant() {
+		
 		//HEADER
 		//~APP NAME
 		Label space=new Label();
 		
-		Label appName=new Label("Empresa Farmaceutica Ossim");
-		appName.getStyleClass().add("title");
+		Label accountantName=new Label("Empresa Farmaceutica Ossim");
+		accountantName.getStyleClass().add("title");
 		//~...
 		
+		//~ADD
+		Button add=new Button(ADD_SYMBOL);
+		add.setOnMouseClicked(event->{
+			
+			TextField categoryName=onActionAddButton(add);
+			categoryName.setOnKeyPressed(kEvent->{
+				
+        		if(kEvent.getCode().equals(KeyCode.ENTER)){
+        			generate();
+        		}
+        		
+        	});
+		});
+		//~...
+		header.getChildren().addAll(space,accountantName, add);
+		//...
 		
+		//Example
+		HBox itemBox=generateItemBox("Maquina", "Maquina.png", "Category.png");
+		itemBox.setOnMouseClicked(event->{
+			//Open
+			if(event.getButton()==MouseButton.PRIMARY){
+				identifiers[0]="Maquina";
+				generate();
+			}
+		});
+		list.getItems().add(itemBox);
+		//...
+		
+	}
+	
+	public void generateCategory() {//Example
+		
+		//HEADER
+		//~Back
+		Button back=new Button(BACK_SYMBOL);
+		back.setOnMouseClicked(event->{
+			identifiers[0]=null;
+			generate();
+		});
+		//~...
+		//~Console Name
+		Label categoryName=new Label(identifiers[0].toString());
+		categoryName.getStyleClass().add("title");
+		//~...
+		//~Add
+		Button add=new Button(ADD_SYMBOL);
+		add.setOnMouseClicked(event->{
+			
+			TextField ppeName=onActionAddButton(add);
+			ppeName.setOnKeyPressed(kEvent->{
+        		
+        		if(kEvent.getCode().equals(KeyCode.ENTER)){
+        			generate();
+        		}
+        	});
+		});
+		//~...
+		header.getChildren().addAll(back,categoryName,add);
+		//...	
+		
+		//Example
+		HBox itemBox=generateItemBox("Centrifuga", "Maquina/Centrifuga.png", "PPE.png");
+		String money="$"+172800;
+		itemBox.getChildren().add(new Label(money));
+		itemBox.setOnMouseClicked(event->{
+			//Open
+			if(event.getButton()==MouseButton.PRIMARY){
+				identifiers[1]="Centrifuga";
+				generate();
+			}
+		});
+		list.getItems().add(itemBox);
+		//...
+		
+	}
+	
+	public void generatePPE() {//Example
+		//HEADER
+		//~Back
+		Button back=new Button(BACK_SYMBOL);
+		back.setOnMouseClicked(event->{
+			identifiers[1]=null;
+			generate();
+		});
+		//~...
+		//~Game Name
+		Label ppeName=new Label(identifiers[1].toString());
+		ppeName.getStyleClass().add("title");
+		//...
+		//~Add
+		Button edit=new Button(EDIT_SYMBOL);
+		edit.setOnMouseClicked(event->{
+			edit.setText(DONE_SYMBOL);
+			edit.setOnMouseClicked(mEvent->{
+				generate();
+			});
+		});
+		//~...
+		header.getChildren().addAll(back,ppeName,edit);
+		//...
 	}
 	
 	//Supporters
@@ -156,7 +258,7 @@ public class ControlMenu implements Initializable{
 		itemBox.getStyleClass().add("item-box");
 		
 		//Image
-		File img=new File(ICONS_PATH+imgPath+".png");
+		File img=new File(ICONS_PATH+imgPath);
 		if(!img.exists()){
 			img=new File(DEFAULT_ICONS_PATH+defaultImgPath);
 		}
