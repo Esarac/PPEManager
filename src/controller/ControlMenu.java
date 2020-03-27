@@ -89,7 +89,7 @@ public class ControlMenu implements Initializable{
 		}
 	}
 
-	public void generateAccountant() {
+	public void generateAccountant() {//Example
 		
 		//HEADER
 		//~SEARCH
