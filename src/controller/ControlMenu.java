@@ -65,7 +65,7 @@ public class ControlMenu implements Initializable{
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		accountant=new Accountant();
+		accountant=new Accountant("Empresa Farmaceutica Ossim");
 		identifiers=new String[2];
 	}
 	
