@@ -27,7 +27,7 @@ public class PPE {
 	
 	private double value;
 	private int lifespan;
-	private ArrayList<Tuple<Double, GregorianCalendar>> deterioration;
+	private ArrayList<Tuple<Double, GregorianCalendar>> deteriorations;
 	private ArrayList<Tuple<Double, GregorianCalendar>> valorizations;
 	
 	//Constructor
@@ -41,7 +41,7 @@ public class PPE {
 		this.description = description;
 		
 		this.state = State.OWNED;
-		this.deterioration = new ArrayList<Tuple<Double, GregorianCalendar>>();
+		this.deteriorations = new ArrayList<Tuple<Double, GregorianCalendar>>();
 		this.valorizations = new ArrayList<Tuple<Double, GregorianCalendar>>();
 	}
 	
@@ -50,7 +50,7 @@ public class PPE {
 	public void addDeterioration(double value, GregorianCalendar date) throws NotOwnedException{
 		if(state.equals(State.OWNED)){
 			
-			deterioration.add(new Tuple<Double, GregorianCalendar>(value, date));
+			deteriorations.add(new Tuple<Double, GregorianCalendar>(value, date));
 			if(isLost()) {
 				this.state = State.DAMAGED;
 			}
@@ -134,9 +134,9 @@ public class PPE {
 	public double calculateAccumulatedDeterioration(GregorianCalendar actualDate){
 		double impaired = 0;
 		
-		for(int i = 0; i < deterioration.size(); i++){
-			if(deterioration.get(i).getVal2().compareTo(actualDate) <= 0){
-				impaired += deterioration.get(i).getVal1();
+		for(int i = 0; i < deteriorations.size(); i++){
+			if(deteriorations.get(i).getVal2().compareTo(actualDate) <= 0){
+				impaired += deteriorations.get(i).getVal1();
 			}
 		}
 		
@@ -196,6 +196,66 @@ public class PPE {
 		}
 		
 		return table;
+	}
+	
+		//Compare
+	public int compareName(PPE ppe) {
+		return name.compareToIgnoreCase(ppe.getName());
+	}
+	
+	
+		//Set
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public void setEntrusted(String entrusted) {
+		this.entrusted = entrusted;
+	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+		//Get
+	public String getName() {
+		return name;
+	}
+	
+	public String getEntrusted() {
+		return entrusted;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+
+	public int getUnits() {
+		return units;
+	}
+
+	public State getState() {
+		return state;
+	}
+
+	public GregorianCalendar getDate() {
+		return date;
+	}
+
+	public double getValue() {
+		return value;
+	}
+
+	public int getLifespan() {
+		return lifespan;
+	}
+
+	public ArrayList<Tuple<Double, GregorianCalendar>> getDeteriorations() {
+		return deteriorations;
+	}
+
+	public ArrayList<Tuple<Double, GregorianCalendar>> getValorizations() {
+		return valorizations;
 	}
 	
 }
