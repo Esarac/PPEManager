@@ -15,12 +15,13 @@ public class Category{
 	//Constructor
 	public Category(String name) {
 		this.name = name;
+		this.ppes = new ArrayList<PPE>();
 	}
 	
 	//Methods
 		//Add
 	public void addPPE(PPE ppe) throws AlreadyExistException{
-		if(searchPPE(ppe.getName()) != null){
+		if(searchPPE(ppe.getName()) == null){
 			ppes.add(ppe);
 		}
 		else{
@@ -108,6 +109,10 @@ public class Category{
 	
 	public ArrayList<PPE> getPpes(){
 		return ppes;
+	}
+	
+	public String toString() {
+		return name;
 	}
 	
 }

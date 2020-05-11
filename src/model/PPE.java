@@ -31,7 +31,7 @@ public class PPE {
 	private ArrayList<Tuple<Double, GregorianCalendar>> valorizations;
 	
 	//Constructor
-	private PPE(String name, int units,double value, int lifespan, GregorianCalendar date, String entrusted, String description) {
+	public PPE(String name, int units,double value, int lifespan, GregorianCalendar date, String entrusted, String description) {
 		this.name = name;
 		this.units = units;
 		this.value = value;
@@ -118,12 +118,12 @@ public class PPE {
 	}
 		//Accumulated Depreciation
 	public double calculateAccumulatedDepreciation(GregorianCalendar actualDate) {
-		LocalDate date = new GregorianCalendar(2020, 1, 1).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate date = this.date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		LocalDate lActualDate = actualDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		
 		double accumulatedDepreciation = (value / lifespan) * ChronoUnit.MONTHS.between(date, lActualDate);
 		
-		return -accumulatedDepreciation;
+		return accumulatedDepreciation*-1;
 	}
 	
 	public double calculateAccumulatedDepreciation() {
@@ -256,6 +256,10 @@ public class PPE {
 
 	public ArrayList<Tuple<Double, GregorianCalendar>> getValorizations() {
 		return valorizations;
+	}
+	
+	public String toString() {
+		return name;
 	}
 	
 }

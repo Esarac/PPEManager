@@ -4,9 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.ResourceBundle;
 
+import exception.AlreadyExistException;
+import exception.NotOwnedException;
+import exception.NotRemovableException;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -17,6 +23,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -36,6 +43,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser.ExtensionFilter;
 import model.Accountant;
+import model.Category;
+import model.PPE;
+import model.PPE.State;
 
 public class ControlMenu implements Initializable{
 	
@@ -104,14 +114,16 @@ public class ControlMenu implements Initializable{
 			});
 			searchBar.setOnKeyPressed(kEvent->{
         		if(kEvent.getCode().equals(KeyCode.ENTER)){
-        			generate();
+        			
+        			//Buscar--------------------------------------------------------------------------------------------
+        			
         		}
         	});
 		});
 		//~...
 		
 		//~APP NAME
-		Label accountantName=new Label("Empresa Farmaceutica Ossim");
+		Label accountantName=new Label(accountant.getName());
 		accountantName.getStyleClass().add("title");
 		//~...
 		
@@ -123,6 +135,11 @@ public class ControlMenu implements Initializable{
 			categoryName.setOnKeyPressed(kEvent->{
 				
         		if(kEvent.getCode().equals(KeyCode.ENTER)){
+        			try {
+						accountant.addCategory(new Category(categoryName.getText()));
+					} catch (AlreadyExistException e) {
+						showAlert("Ya existe una categoria con ese nombre");
+					}
         			generate();
         		}
         		
@@ -132,21 +149,118 @@ public class ControlMenu implements Initializable{
 		header.getChildren().addAll(search,accountantName, add);
 		//...
 		
-		//Example
-		HBox itemBox=generateItemBox("Maquina", "Maquina.png", "Category.png");
-		itemBox.setOnMouseClicked(event->{
-			//Open
-			if(event.getButton()==MouseButton.PRIMARY){
-				identifiers[0]="Maquina";
-				generate();
-			}
-		});
-		list.getItems().add(itemBox);
+		//List
+		ArrayList<Category> categories=accountant.getCategories();
+		for(int i=0; i<categories.size(); i++){
+			Category category=categories.get(i);
+			HBox itemBox=generateItemBox(category.toString(), category.getName()+".png", "Category.png");
+			
+			//OnAction
+			itemBox.setOnMouseClicked(event->{
+				//Open
+				if(event.getButton() == MouseButton.PRIMARY){
+					this.identifiers[0]=category.getName();
+					generate();
+				}
+				//...
+				//Option Menu
+				else if(event.getButton()==MouseButton.SECONDARY){
+					generateItemMenu();
+					
+					//Delete
+					MenuItem delete = new MenuItem("Borrar");
+			        delete.setOnAction(dEvent->{
+			        	try {
+							accountant.removeCategory(category);
+						}
+			        	catch (NotRemovableException e) {
+							showAlert("No se puede borrar, porque tiene PPEs");
+						}
+			        	catch (NotOwnedException e) {
+			        		showAlert("No posees este item");
+						}
+			        	generate();
+			        });
+			        //...
+			        
+			        //Edit
+			        MenuItem name = new MenuItem("Cambiar Name");
+					name.setOnAction(eEvent->{
+			        	Node nameNode=itemBox.getChildren().get(1);
+			        	itemBox.getChildren().remove(1);
+			        	
+			        	//toTextField
+			        	if(nameNode instanceof Label){
+				        	TextField categoryName=new TextField(category.toString());
+				        	itemBox.getChildren().add(1,categoryName);
+				        	
+				        	categoryName.setOnKeyPressed(kEvent->{
+				        		
+				        		if(kEvent.getCode().equals(KeyCode.ENTER)){
+				        			try {
+										accountant.editCategory(category, categoryName.getText());
+									}
+				        			catch (AlreadyExistException e) {
+				        				showAlert("Ya existe una categoria con ese nombre");
+									}
+				        			catch (NotOwnedException e) {
+				        				showAlert("No posees este item");
+									}
+				        			
+									generate();
+				        		}
+				        		
+				        	});
+			        	}
+			        	//...
+			        	//toLabel
+			        	else if(nameNode instanceof TextField){
+				        	itemBox.getChildren().add(1, new Label(category.toString()));
+			        	}
+			        	//...
+			        	
+					});
+			        //...
+					
+			        //Image
+			        MenuItem image = new MenuItem("Cambiar Imagen");
+			        image.setOnAction(eEvent->{
+			        	//Choose File
+			        	Stage stage = (Stage) pane.getScene().getWindow();
+				        FileChooser fileChooser = new FileChooser();
+						fileChooser.setTitle("Image Selector");
+						fileChooser.getExtensionFilters().add(new ExtensionFilter("PNG", "*.png"));
+						File imageFile=fileChooser.showOpenDialog(stage);
+						//...
+						//Delete
+						File newImageFile=new File(ICONS_PATH+category.getName()+".png");
+						newImageFile.delete();
+						//...
+						//Change
+						if(imageFile!=null){
+							imageFile.renameTo(newImageFile);
+						}
+						generate();
+						//...
+						
+			        });
+			        //...
+					
+			        itemMenu.getItems().addAll(delete, name, image);
+			        itemMenu.show(itemBox, event.getScreenX(), event.getScreenY());
+			        
+				}
+				//...
+			});
+			//...
+			
+			list.getItems().add(itemBox);
+		}
 		//...
 		
 	}
 	
-	public void generateCategory() {//Example
+	public void generateCategory() {
 		
 		//HEADER
 		//~Back
@@ -163,24 +277,91 @@ public class ControlMenu implements Initializable{
 		//~Add
 		Button add=new Button(ADD_SYMBOL);
 		add.setOnMouseClicked(event->{
-			generatePPEEditor();
+			generatePPECreator();
 		});
 		//~...
 		header.getChildren().addAll(back,categoryName,add);
 		//...	
 		
-		//Example
-		HBox itemBox=generateItemBox("Centrifuga", "Maquina/Centrifuga.png", "PPE.png");
-		String money="$"+172800;
-		itemBox.getChildren().add(new Label(money));
-		itemBox.setOnMouseClicked(event->{
-			//Open
-			if(event.getButton()==MouseButton.PRIMARY){
-				identifiers[1]="Centrifuga";
-				generate();
-			}
-		});
-		list.getItems().add(itemBox);
+		Category category = accountant.searchCategory(identifiers[0]);
+		
+		//List
+		ArrayList<PPE> ppes = category.getPpes();
+		for(int i=0; i<ppes.size(); i++){
+			PPE ppe = ppes.get(i);
+			ppe.depreciated();
+			HBox itemBox=generateItemBox(ppe.toString(), identifiers[0]+"/"+ppe.getName()+".png", "Console.png");
+			
+			//State
+			String state=ppe.getState().toString();
+			itemBox.getChildren().add(new Label(state));
+			//...
+			
+			//OnAction
+			itemBox.setOnMouseClicked(event->{
+				
+				//Open
+				if(event.getButton()==MouseButton.PRIMARY){
+					this.identifiers[1]=ppe.getName();
+					generate();
+				}
+				//...
+				//Option Menu
+				else if(event.getButton()==MouseButton.SECONDARY){
+					
+					generateItemMenu();
+					//Sell
+					MenuItem delete = new MenuItem("Vender");
+			        delete.setOnAction(dEvent->{
+			        	try {
+							ppe.sell();
+						}
+			        	catch (NotOwnedException e) {
+							showAlert("No posees este PPE");
+						}
+			        	generate();
+			        });
+					//...
+			        
+			        //Image
+			        MenuItem image = new MenuItem("Cambiar Imagen");
+			        image.setOnAction(eEvent->{
+			        	//Choose File
+			        	Stage stage = (Stage) pane.getScene().getWindow();
+				        FileChooser fileChooser = new FileChooser();
+						fileChooser.setTitle("Image Selector");
+						fileChooser.getExtensionFilters().add(new ExtensionFilter("PNG", "*.png"));
+						File imageFile=fileChooser.showOpenDialog(stage);
+						//...
+						//CreateDir
+						new File(ICONS_PATH+identifiers[0]).mkdir();
+						//...
+						//Delete
+						File newImageFile=new File(ICONS_PATH+identifiers[0]+"/"+identifiers[1]+".png");
+						newImageFile.delete();
+						//...
+						//Change
+						if(imageFile!=null){
+							imageFile.renameTo(newImageFile);
+						}
+						generate();
+						//...
+						
+			        });
+			        //...
+			        
+			        itemMenu.getItems().addAll(delete, image);
+			        itemMenu.show(itemBox, event.getScreenX(), event.getScreenY());
+			        
+				}
+				//...
+				
+			});
+			//...
+			
+			list.getItems().add(itemBox);
+			
+		}
 		//...
 		
 	}
@@ -201,13 +382,15 @@ public class ControlMenu implements Initializable{
 		//~Edit
 		Button edit=new Button(EDIT_SYMBOL);
 		edit.setOnMouseClicked(event->{
-			generatePPEEditor();
+			
 		});
 		//~...
 		header.getChildren().addAll(back,ppeName,edit);
 		//...
 		
-		//Example
+		PPE ppe = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]);
+		
+		//PPE
 		information=new VBox();
 		information.setSpacing(10);
 		information.setAlignment(Pos.CENTER);
@@ -221,7 +404,7 @@ public class ControlMenu implements Initializable{
 		//---
 		intialValue.getChildren().add(new Label("Valor Inicial:"));
 		//---
-		Label intialValueVar=new Label("$"+480000);
+		Label intialValueVar=new Label("$"+ppe.getValue());
 		intialValue.getChildren().add(intialValueVar);
 		//~...
 		
@@ -233,8 +416,32 @@ public class ControlMenu implements Initializable{
 		//---
 		accumulatedDepreciation.getChildren().add(new Label("Depreciacion Acumulada:"));
 		//---
-		Label accumulatedDepreciationVar=new Label("($"+307200+")");
+		Label accumulatedDepreciationVar=new Label("($"+ppe.calculateAccumulatedDepreciation()+")");
 		accumulatedDepreciation.getChildren().add(accumulatedDepreciationVar);
+		//~...
+		
+		//~Accumulated Deterioration
+		HBox accumulatedDeterioration=new HBox();
+		accumulatedDeterioration.setSpacing(10);
+		accumulatedDeterioration.setAlignment(Pos.CENTER);
+		information.getChildren().add(accumulatedDeterioration);
+		//---
+		accumulatedDeterioration.getChildren().add(new Label("Deterioro Acumulado:"));
+		//---
+		Label accumulatedDeteriorationVar=new Label("($"+ppe.calculateAccumulatedDeterioration()+")");
+		accumulatedDeterioration.getChildren().add(accumulatedDeteriorationVar);
+		//~...
+		
+		//~Accumulated Valorization
+		HBox accumulatedValorization=new HBox();
+		accumulatedValorization.setSpacing(10);
+		accumulatedValorization.setAlignment(Pos.CENTER);
+		information.getChildren().add(accumulatedValorization);
+		//---
+		accumulatedValorization.getChildren().add(new Label("Valorizacion Acumulado:"));
+		//---
+		Label accumulatedValorizationVar=new Label("$"+ppe.calculateAccumulatedValorization());
+		accumulatedValorization.getChildren().add(accumulatedValorizationVar);
 		//~...
 		
 		//~Net Value
@@ -245,10 +452,21 @@ public class ControlMenu implements Initializable{
 		//---
 		netValue.getChildren().add(new Label("Valor Neto:"));
 		//---
-		Label netValueVar=new Label("$"+172800);
+		Label netValueVar=new Label("$"+ppe.calculateNetValue());
 		netValue.getChildren().add(netValueVar);
 		//~...
 		
+		//~Units
+		HBox units=new HBox();
+		units.setSpacing(10);
+		units.setAlignment(Pos.CENTER);
+		information.getChildren().add(units);
+		//---
+		units.getChildren().add(new Label("Unidades:"));
+		//---
+		Label unitsVar=new Label(ppe.getUnits()+"");
+		units.getChildren().add(unitsVar);
+		//~...
 		
 		//~Entrusted
 		HBox entrusted=new HBox();
@@ -258,7 +476,7 @@ public class ControlMenu implements Initializable{
 		//---
 		entrusted.getChildren().add(new Label("Encargado:"));
 		//---
-		Label entrustedVar=new Label("Mateo Valdes");
+		Label entrustedVar=new Label(ppe.getEntrusted());
 		entrusted.getChildren().add(entrustedVar);
 		//~...
 		
@@ -270,7 +488,8 @@ public class ControlMenu implements Initializable{
 		//---
 		date.getChildren().add(new Label("Dia Comprado:"));
 		//---
-		Label dateVar=new Label("9 de Noviembre del 2020");
+		SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy");
+		Label dateVar=new Label(f.format(ppe.getDate().getTime()));
 		date.getChildren().add(dateVar);
 		//~...
 		
@@ -282,7 +501,7 @@ public class ControlMenu implements Initializable{
 		//---
 		lifespan.getChildren().add(new Label("Vida Util:"));
 		//---
-		Label lifespanVar=new Label("25 meses");
+		Label lifespanVar=new Label(ppe.getLifespan()+"");
 		lifespan.getChildren().add(lifespanVar);
 		//~...
 		
@@ -294,7 +513,7 @@ public class ControlMenu implements Initializable{
 		//---
 		description.getChildren().add(new Label("Descripcion:"));
 		//---
-		Label descriptionVar=new Label("Mantener en sitios frios");
+		Label descriptionVar=new Label(ppe.getDescription());
 		description.getChildren().add(descriptionVar);
 		//~...
 		
@@ -309,7 +528,7 @@ public class ControlMenu implements Initializable{
 		
 	}
 	
-	public void generatePPEEditor() {//Example
+	public void generatePPECreator() {
 		header.getChildren().clear();
 		list.getItems().clear();
 		pane.getChildren().remove(information);
@@ -326,22 +545,27 @@ public class ControlMenu implements Initializable{
 		//~...
 		//~Game Name
 		TextField ppeName=new TextField();
+		ppeName.setPromptText("Nombre");
 		ppeName.getStyleClass().add("title");
 		//...
-		//~Add
-		Button edit=new Button(DONE_SYMBOL);
-		edit.setOnMouseClicked(event->{
-			generate();
-		});
-		//~...
-		header.getChildren().addAll(back,ppeName,edit);
-		//...
 		
-		//Example
+		//PPE
 		information=new VBox();
 		information.setSpacing(10);
 		information.setAlignment(Pos.CENTER);
 		pane.getChildren().add(0, information);
+		
+		//~Units
+		HBox units=new HBox();
+		units.setSpacing(10);
+		units.setAlignment(Pos.CENTER);
+		information.getChildren().add(units);
+		//---
+		units.getChildren().add(new Label("Unidades:"));
+		//---
+		TextField unitsVar=new TextField();
+		units.getChildren().add(unitsVar);
+		//~...
 		
 		//~Initial Value
 		HBox intialValue=new HBox();
@@ -354,31 +578,6 @@ public class ControlMenu implements Initializable{
 		TextField intialValueVar=new TextField();
 		intialValue.getChildren().add(intialValueVar);
 		//~...
-		
-		//~Accumulated Depreciation
-		HBox accumulatedDepreciation=new HBox();
-		accumulatedDepreciation.setSpacing(10);
-		accumulatedDepreciation.setAlignment(Pos.CENTER);
-		information.getChildren().add(accumulatedDepreciation);
-		//---
-		accumulatedDepreciation.getChildren().add(new Label("Depreciacion Acumulada:"));
-		//---
-		TextField accumulatedDepreciationVar=new TextField();
-		accumulatedDepreciation.getChildren().add(accumulatedDepreciationVar);
-		//~...
-		
-		//~Net Value
-		HBox netValue=new HBox();
-		netValue.setSpacing(10);
-		netValue.setAlignment(Pos.CENTER);
-		information.getChildren().add(netValue);
-		//---
-		netValue.getChildren().add(new Label("Valor Neto:"));
-		//---
-		TextField netValueVar=new TextField();
-		netValue.getChildren().add(netValueVar);
-		//~...
-		
 		
 		//~Entrusted
 		HBox entrusted=new HBox();
@@ -400,7 +599,7 @@ public class ControlMenu implements Initializable{
 		//---
 		date.getChildren().add(new Label("Dia Comprado:"));
 		//---
-		TextField dateVar=new TextField();
+		DatePicker dateVar=new DatePicker();
 		date.getChildren().add(dateVar);
 		//~...
 		
@@ -410,7 +609,7 @@ public class ControlMenu implements Initializable{
 		lifespan.setAlignment(Pos.CENTER);
 		information.getChildren().add(lifespan);
 		//---
-		lifespan.getChildren().add(new Label("Vida Util:"));
+		lifespan.getChildren().add(new Label("Vida Util (En Meses):"));
 		//---
 		TextField lifespanVar=new TextField();
 		lifespan.getChildren().add(lifespanVar);
@@ -428,18 +627,43 @@ public class ControlMenu implements Initializable{
 		description.getChildren().add(descriptionVar);
 		//~...
 		
-		if(identifiers[1]!=null){
-			ppeName.setText("Centrifuga");
-			intialValueVar.setText("480000");
-			accumulatedDepreciationVar.setText("307200");
-			netValueVar.setText("172800");
-			entrustedVar.setText("Mateo Valdes");
-			dateVar.setText("9 de Noviembre del 2020");
-			lifespanVar.setText("25");
-			descriptionVar.setText("Mantener en sitios frios");
-		}
 		//...
+		
+		//~Add
+		Button edit=new Button(DONE_SYMBOL);
+		edit.setOnMouseClicked(event->{
+			
+			try {
+				String nameP = ppeName.getText();
+				int unitsP = Integer.parseInt(unitsVar.getText());
+				double valueP = Double.parseDouble(intialValueVar.getText());
+				int lifespanP = Integer.parseInt(lifespanVar.getText());
+				GregorianCalendar dateP = GregorianCalendar.from(dateVar.getValue().atStartOfDay(ZoneId.systemDefault()));
+				String entrustedP = entrustedVar.getText();
+				String descriptionP = descriptionVar.getText();
 				
+				PPE ppe = new PPE(nameP, unitsP, valueP, lifespanP, dateP, entrustedP, descriptionP);
+				
+				if(!nameP.isEmpty() && !entrustedP.isEmpty()){
+					accountant.searchCategory(identifiers[0]).addPPE(ppe);
+					generate();
+				}
+				else {
+					showAlert("Completa los espacios vacios");
+				}
+			}
+			catch (AlreadyExistException e) {
+				showAlert("Ya existe un PPE con ese nombre");
+			}
+			catch(NumberFormatException e){
+				showAlert("Coloca datos validos en las casillas");
+			}
+			
+		});
+		//~...
+		header.getChildren().addAll(back,ppeName,edit);
+		//...
+		
 	}
 	
 	public void generateTimeline() {//Example
@@ -464,25 +688,19 @@ public class ControlMenu implements Initializable{
 		header.getChildren().addAll(back,categoryName,empty);
 		//...
 		
-		for(int m=25; m>=0; m--){
-			int money=(int)((480000)*((double)m/25));
-			
-			int month=11+(25-m);
-			
-			int year=18;
-			while(month>12) {
-				year+=1;
-				month-=12;
-			}
-			
+		String[][] table = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]).showDepreciationReport();
+		for(int i = 0; i < table.length; i++) {
 			HBox itemBox=new HBox();
 			itemBox.setSpacing(10);
 			itemBox.setAlignment(Pos.CENTER);
 			itemBox.getStyleClass().add("item-box");
 			
-			itemBox.getChildren().addAll(new Label("1/"+month+"/"+year), new Label(), new Label("$"+money));
+			for(int j = 0; j < table[i].length; j++){
+				itemBox.getChildren().add(new Label(table[i][j]));
+			}
 			list.getItems().add(itemBox);
 		}
+		
 	}
 	
 	//Supporters
