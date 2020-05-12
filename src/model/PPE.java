@@ -1,5 +1,6 @@
 package model;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -10,8 +11,10 @@ import java.util.GregorianCalendar;
 import exception.NotOwnedException;
 import util.Tuple;
 
-public class PPE {
+public class PPE implements Serializable{
 
+	//Constants
+	private static final long serialVersionUID = 1L;
 	public enum State{
 		OWNED, DEPRECIATION, SOLD, DAMAGED, IMPAIRMENT;
 	}

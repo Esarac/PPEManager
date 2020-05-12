@@ -1,5 +1,10 @@
 package model;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import exception.AlreadyExistException;
@@ -8,6 +13,8 @@ import exception.NotRemovableException;
 
 public class Accountant {
 
+	public final static String DATA_PATH = "dat/info.al";
+	
 	//Attributes
 	private String name;
 	private ArrayList<Category> categories;
@@ -16,6 +23,7 @@ public class Accountant {
 	public Accountant(String name) {
 		this.name = name;
 		this.categories = new ArrayList<Category>();
+		load();
 	}
 	
 	//Methods
@@ -69,8 +77,10 @@ public class Accountant {
 		
 		ArrayList<PPE> ppesName = new ArrayList<PPE>();
 		for(PPE ppe : ppes){
-			if(aproxName.equalsIgnoreCase(ppe.getName().substring(0,aproxName.length()))) {
-				ppesName.add(ppe);
+			if(aproxName.length() <= ppe.getName().length()) {
+				if(aproxName.equalsIgnoreCase(ppe.getName().substring(0,aproxName.length()))) {
+					ppesName.add(ppe);
+				}
 			}
 		}
 		
@@ -85,9 +95,12 @@ public class Accountant {
 		
 		ArrayList<PPE> ppesEntrusted = new ArrayList<PPE>();
 		for(PPE ppe : ppes){
-			if(aproxEntrusted.equalsIgnoreCase(ppe.getEntrusted().substring(0,aproxEntrusted.length()))) {
-				ppesEntrusted.add(ppe);
+			if(aproxEntrusted.length() <= ppe.getEntrusted().length()) {
+				if(aproxEntrusted.equalsIgnoreCase(ppe.getEntrusted().substring(0,aproxEntrusted.length()))) {
+					ppesEntrusted.add(ppe);
+				}
 			}
+
 		}
 		
 		return ppesEntrusted;
@@ -109,6 +122,29 @@ public class Accountant {
 		else {
 			throw new NotOwnedException();
 		}
+	}
+	
+		//Load
+	public void load() {
+		try{
+			FileInputStream file=new FileInputStream(DATA_PATH);
+			ObjectInputStream creator=new ObjectInputStream(file);
+			this.categories=(ArrayList<Category>)creator.readObject();
+			creator.close();
+		}
+		catch (IOException e) {save();} 
+		catch (ClassNotFoundException e) {}
+	}
+	
+		//Save
+	public void save() {
+		try {
+			FileOutputStream file=new FileOutputStream(DATA_PATH);
+			ObjectOutputStream creator=new ObjectOutputStream(file);
+			creator.writeObject(categories);
+			creator.close();
+		}
+		catch (IOException e) {}
 	}
 	
 		//Get

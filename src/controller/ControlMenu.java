@@ -1,51 +1,56 @@
 package controller;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.ResourceBundle;
-
 import exception.AlreadyExistException;
 import exception.NotOwnedException;
 import exception.NotRemovableException;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.FileChooser.ExtensionFilter;
 import model.Accountant;
 import model.Category;
 import model.PPE;
-import model.PPE.State;
 
 public class ControlMenu implements Initializable{
 	
@@ -79,12 +84,112 @@ public class ControlMenu implements Initializable{
 		identifiers=new String[2];
 	}
 	
+	public class PPETableView {
+
+		private SimpleStringProperty name;
+		private SimpleStringProperty date;
+		private SimpleStringProperty historic;
+		private SimpleStringProperty unitHistoric;
+		private SimpleStringProperty depretation;
+		private SimpleStringProperty damaged;
+		private SimpleStringProperty valorization;
+		private SimpleStringProperty net;
+		private SimpleStringProperty unitNet;
+		
+		public PPETableView(String name, String date, String historic, String unitHistoric, String depretation, String damaged, String valorization, String net, String unitNet) {
+			this.name = new SimpleStringProperty(name);
+			this.date = new SimpleStringProperty(date);
+			this.historic = new SimpleStringProperty(historic);
+			this.unitHistoric = new SimpleStringProperty(unitHistoric);
+			this.depretation = new SimpleStringProperty(depretation);
+			this.damaged = new SimpleStringProperty(damaged);
+			this.valorization = new SimpleStringProperty(valorization);
+			this.net = new SimpleStringProperty(net);
+			this.unitNet = new SimpleStringProperty(unitNet);
+		}
+		
+		public String getValorization() {
+			return valorization.get();
+		}
+		
+		public void setValorization(String valorization) {
+			this.valorization = new SimpleStringProperty(valorization);
+		}
+		
+		public String getName() {
+			return name.get();
+		}
+
+		public void setName(String name) {
+			this.name = new SimpleStringProperty(name);
+		}
+
+		public String getDate() {
+			return date.get();
+		}
+
+		public void setDate(String date) {
+			this.date = new SimpleStringProperty(date);
+		}
+
+		public String getHistoric() {
+			return historic.get();
+		}
+
+		public void setHistoric(String historic) {
+			this.historic = new SimpleStringProperty(historic);
+		}
+
+		public String getUnitHistoric() {
+			return unitHistoric.get();
+		}
+
+		public void setUnitHistoric(String unitHistoric) {
+			this.unitHistoric = new SimpleStringProperty(unitHistoric);;
+		}
+
+		public String getDepretation() {
+			return depretation.get();
+		}
+
+		public void setDepretation(String depretation) {
+			this.depretation = new SimpleStringProperty(depretation);
+		}
+
+		public String getDamaged() {
+			return damaged.get();
+		}
+
+		public void setDamaged(String damaged) {
+			this.damaged = new SimpleStringProperty(damaged);
+		}
+
+		public String getNet() {
+			return net.get();
+		}
+
+		public void setNet(String net) {
+			this.net = new SimpleStringProperty(net);
+		}
+
+		public String getUnitNet() {
+			return unitNet.get();
+		}
+
+		public void setUnitNet(String unitNet) {
+			this.unitNet = new SimpleStringProperty(unitNet);
+		}
+	}
+	
 	//Generators
 	public void generate() {
+		
+		accountant.save();
 		
 		header.getChildren().clear();
 		list.getItems().clear();
 		pane.getChildren().remove(information);
+		pane.setPadding(new Insets(50, 50, 50, 50));
 		if(itemMenu!=null){itemMenu.hide();}
 		header.setAlignment(Pos.CENTER);
 		
@@ -115,7 +220,18 @@ public class ControlMenu implements Initializable{
 			searchBar.setOnKeyPressed(kEvent->{
         		if(kEvent.getCode().equals(KeyCode.ENTER)){
         			
-        			//Buscar--------------------------------------------------------------------------------------------
+        			list.getItems().clear();
+        			pane.getChildren().remove(information);
+        			if(itemMenu!=null){itemMenu.hide();}
+        			header.setAlignment(Pos.CENTER);
+        			
+        			//List Name
+        			ArrayList<PPE> name = accountant.searchPPEByName(searchBar.getText());
+        			generateSearchList(name, "(Nombre)");
+        			
+        			//List Entrusted
+        			ArrayList<PPE> entrusted = accountant.searchPPEByEntrusted(searchBar.getText());
+        			generateSearchList(entrusted, "(Encargado)");
         			
         		}
         	});
@@ -137,7 +253,8 @@ public class ControlMenu implements Initializable{
         		if(kEvent.getCode().equals(KeyCode.ENTER)){
         			try {
 						accountant.addCategory(new Category(categoryName.getText()));
-					} catch (AlreadyExistException e) {
+					}
+        			catch (AlreadyExistException e) {
 						showAlert("Ya existe una categoria con ese nombre");
 					}
         			generate();
@@ -290,7 +407,7 @@ public class ControlMenu implements Initializable{
 		for(int i=0; i<ppes.size(); i++){
 			PPE ppe = ppes.get(i);
 			ppe.depreciated();
-			HBox itemBox=generateItemBox(ppe.toString(), identifiers[0]+"/"+ppe.getName()+".png", "Console.png");
+			HBox itemBox=generateItemBox(ppe.toString(), identifiers[0]+"/"+ppe.getName()+".png", "PPE.png");
 			
 			//State
 			String state=ppe.getState().toString();
@@ -337,7 +454,7 @@ public class ControlMenu implements Initializable{
 						new File(ICONS_PATH+identifiers[0]).mkdir();
 						//...
 						//Delete
-						File newImageFile=new File(ICONS_PATH+identifiers[0]+"/"+identifiers[1]+".png");
+						File newImageFile=new File(ICONS_PATH+identifiers[0]+"/"+ppe.getName()+".png");
 						newImageFile.delete();
 						//...
 						//Change
@@ -366,7 +483,7 @@ public class ControlMenu implements Initializable{
 		
 	}
 	
-	public void generatePPE() {//Example
+	public void generatePPE() {
 		//HEADER
 		//~Back
 		Button back=new Button(BACK_SYMBOL);
@@ -382,7 +499,7 @@ public class ControlMenu implements Initializable{
 		//~Edit
 		Button edit=new Button(EDIT_SYMBOL);
 		edit.setOnMouseClicked(event->{
-			
+			generatePPEEditor();
 		});
 		//~...
 		header.getChildren().addAll(back,ppeName,edit);
@@ -404,7 +521,7 @@ public class ControlMenu implements Initializable{
 		//---
 		intialValue.getChildren().add(new Label("Valor Inicial:"));
 		//---
-		Label intialValueVar=new Label("$"+ppe.getValue());
+		Label intialValueVar=new Label(formatMoney(ppe.getValue()));
 		intialValue.getChildren().add(intialValueVar);
 		//~...
 		
@@ -416,7 +533,7 @@ public class ControlMenu implements Initializable{
 		//---
 		accumulatedDepreciation.getChildren().add(new Label("Depreciacion Acumulada:"));
 		//---
-		Label accumulatedDepreciationVar=new Label("($"+ppe.calculateAccumulatedDepreciation()+")");
+		Label accumulatedDepreciationVar=new Label(formatMoney(ppe.calculateAccumulatedDepreciation()));
 		accumulatedDepreciation.getChildren().add(accumulatedDepreciationVar);
 		//~...
 		
@@ -428,7 +545,7 @@ public class ControlMenu implements Initializable{
 		//---
 		accumulatedDeterioration.getChildren().add(new Label("Deterioro Acumulado:"));
 		//---
-		Label accumulatedDeteriorationVar=new Label("($"+ppe.calculateAccumulatedDeterioration()+")");
+		Label accumulatedDeteriorationVar=new Label(formatMoney(ppe.calculateAccumulatedDeterioration()));
 		accumulatedDeterioration.getChildren().add(accumulatedDeteriorationVar);
 		//~...
 		
@@ -440,7 +557,7 @@ public class ControlMenu implements Initializable{
 		//---
 		accumulatedValorization.getChildren().add(new Label("Valorizacion Acumulado:"));
 		//---
-		Label accumulatedValorizationVar=new Label("$"+ppe.calculateAccumulatedValorization());
+		Label accumulatedValorizationVar=new Label(formatMoney(ppe.calculateAccumulatedValorization()));
 		accumulatedValorization.getChildren().add(accumulatedValorizationVar);
 		//~...
 		
@@ -452,7 +569,7 @@ public class ControlMenu implements Initializable{
 		//---
 		netValue.getChildren().add(new Label("Valor Neto:"));
 		//---
-		Label netValueVar=new Label("$"+ppe.calculateNetValue());
+		Label netValueVar=new Label(formatMoney(ppe.calculateNetValue()));
 		netValue.getChildren().add(netValueVar);
 		//~...
 		
@@ -501,7 +618,7 @@ public class ControlMenu implements Initializable{
 		//---
 		lifespan.getChildren().add(new Label("Vida Util:"));
 		//---
-		Label lifespanVar=new Label(ppe.getLifespan()+"");
+		Label lifespanVar=new Label(ppe.getLifespan()+" meses");
 		lifespan.getChildren().add(lifespanVar);
 		//~...
 		
@@ -666,7 +783,7 @@ public class ControlMenu implements Initializable{
 		
 	}
 	
-	public void generateTimeline() {//Example
+	public void generateTimeline() {
 		header.getChildren().clear();
 		list.getItems().clear();
 		pane.getChildren().remove(information);
@@ -688,30 +805,270 @@ public class ControlMenu implements Initializable{
 		header.getChildren().addAll(back,categoryName,empty);
 		//...
 		
+		information =new VBox();
+		information.setSpacing(5);
+		information.setAlignment(Pos.CENTER);
+		pane.setPadding(new Insets(0, 0, 0, 0));
+		information.setPadding(new Insets(50, 0, 0, 0));
+		pane.getChildren().add(0, information);
+		
+		TableView<PPETableView> table = new TableView<>();
+		table.setEditable(false);
+		
+		createColumns(table);
+		
+		information.getChildren().add(table);
+		
+		addData(table);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void createColumns(TableView<PPETableView> tableView) {
+		
+		TableColumn<PPETableView, String> name = new TableColumn<>("Nombre");
+		name.setMinWidth(177.5);
+		name.setCellValueFactory(new PropertyValueFactory<>("name"));
+		name.setSortable(false);
+		
+		TableColumn<PPETableView, String> date = new TableColumn<>("Fecha");
+		date.setMinWidth(120);
+		date.setCellValueFactory(new PropertyValueFactory<>("date"));
+		date.setSortable(false);
+		
+		TableColumn<PPETableView, String> historic = new TableColumn<>("Valor Historico");
+		historic.setMinWidth(200);
+		historic.setCellValueFactory(new PropertyValueFactory<>("historic"));
+		historic.setSortable(false);
+		
+		TableColumn<PPETableView, String> unitHistoric = new TableColumn<>("Valor Unitario Historico");
+		unitHistoric.setMinWidth(250);
+		unitHistoric.setCellValueFactory(new PropertyValueFactory<>("unitHistoric"));
+		unitHistoric.setSortable(false);
+		
+		TableColumn<PPETableView, String> depretation = new TableColumn<>("Depreciacion Acumulada");
+		depretation.setMinWidth(265);
+		depretation.setCellValueFactory(new PropertyValueFactory<>("depretation"));
+		depretation.setSortable(false);
+		
+		TableColumn<PPETableView, String> damaged = new TableColumn<>("Deterioro Acumulado");
+		damaged.setMinWidth(270);
+		damaged.setCellValueFactory(new PropertyValueFactory<>("damaged"));
+		damaged.setSortable(false);
+		
+		TableColumn<PPETableView, String> valorization = new TableColumn<>("Valorizacion");
+		valorization.setMinWidth(200);
+		valorization.setCellValueFactory(new PropertyValueFactory<>("valorization"));
+		valorization.setSortable(false);
+		
+		TableColumn<PPETableView, String> net = new TableColumn<>("Valor Neto");
+		net.setMinWidth(215);
+		net.setCellValueFactory(new PropertyValueFactory<>("net"));
+		net.setSortable(false);
+		
+		TableColumn<PPETableView, String> unitNet= new TableColumn<>("Valor Unitario Neto");
+		unitNet.setMinWidth(220);
+		unitNet.setCellValueFactory(new PropertyValueFactory<>("unitNet"));
+		unitNet.setSortable(false);
+		
+		tableView.getColumns().addAll(name, date, historic, unitHistoric, depretation, damaged, valorization, net, unitNet);
+	}
+	
+	public void addData(TableView<PPETableView> tableView) {
 		String[][] table = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]).showDepreciationReport();
+		ObservableList<PPETableView> data = FXCollections.observableArrayList();
+		
 		for(int i = 0; i < table.length; i++) {
-			HBox itemBox=new HBox();
-			itemBox.setSpacing(10);
-			itemBox.setAlignment(Pos.CENTER);
-			itemBox.getStyleClass().add("item-box");
-			
-			for(int j = 0; j < table[i].length; j++){
-				itemBox.getChildren().add(new Label(table[i][j]));
-			}
-			list.getItems().add(itemBox);
+			data.add(new PPETableView(table[i][0], table[i][1], formatMoney(Double.parseDouble(table[i][2])), formatMoney(Double.parseDouble(table[i][3])), formatMoney(Double.parseDouble(table[i][4])), formatMoney(Double.parseDouble(table[i][5])), formatMoney(Double.parseDouble(table[i][6])), formatMoney(Double.parseDouble(table[i][7])), formatMoney(Double.parseDouble(table[i][8]))));
 		}
+		
+		tableView.setItems(data);
+	}
+	
+	public void generatePPEEditor() {
+		header.getChildren().clear();
+		list.getItems().clear();
+		pane.getChildren().remove(information);
+		if(itemMenu!=null){itemMenu.hide();}
+		header.setAlignment(Pos.CENTER);
+		
+		//HEADER
+		//~Back
+		Button back=new Button(BACK_SYMBOL);
+		back.setOnMouseClicked(event->{
+			generate();
+		});
+		//~...
+		//~Game Name
+		TextField ppeName=new TextField(identifiers[1]);
+		ppeName.setPromptText("Nombre");
+		ppeName.getStyleClass().add("title");
+		//...
+		
+		//PPE
+		PPE ppe = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]);
+		
+		information=new VBox();
+		information.setSpacing(10);
+		information.setAlignment(Pos.CENTER);
+		pane.getChildren().add(0, information);
+		
+		//~Entrusted
+		HBox entrusted=new HBox();
+		entrusted.setSpacing(10);
+		entrusted.setAlignment(Pos.CENTER);
+		information.getChildren().add(entrusted);
+		//---
+		entrusted.getChildren().add(new Label("Encargado:"));
+		//---
+		TextField entrustedVar=new TextField(ppe.getEntrusted());
+		entrusted.getChildren().add(entrustedVar);
+		//~...
+		
+		//~Description
+		HBox description=new HBox();
+		description.setSpacing(10);
+		description.setAlignment(Pos.CENTER);
+		information.getChildren().add(description);
+		//---
+		description.getChildren().add(new Label("Descripcion:"));
+		//---
+		TextField descriptionVar=new TextField(ppe.getDescription());
+		description.getChildren().add(descriptionVar);
+		//~...
+		
+		//~Deterioration
+		HBox deterioration=new HBox();
+		deterioration.setSpacing(10);
+		deterioration.setAlignment(Pos.CENTER);
+		information.getChildren().add(deterioration);
+		//---
+		deterioration.getChildren().add(new Label("Deterioro (Solo si se desea):"));
+		//---
+		TextField deteriorationVar=new TextField();
+		deterioration.getChildren().add(deteriorationVar);
+		//~...
+		
+		//~Valorizations
+		HBox valorizations=new HBox();
+		valorizations.setSpacing(10);
+		valorizations.setAlignment(Pos.CENTER);
+		information.getChildren().add(valorizations);
+		//---
+		valorizations.getChildren().add(new Label("Valorizacion (Solo si se desea):"));
+		//---
+		TextField valorizationsVar=new TextField();
+		valorizations.getChildren().add(valorizationsVar);
+		//~...
+		
+		//...
+		
+		//~Add
+		Button edit=new Button(DONE_SYMBOL);
+		edit.setOnMouseClicked(event->{
+			
+			try {
+				
+				if((!ppeName.getText().isEmpty()) && (!entrustedVar.getText().isEmpty())){
+					//Edit
+					accountant.searchCategory(identifiers[0]).editPPE(ppe, ppeName.getText(), entrustedVar.getText(), descriptionVar.getText());
+					
+					//Deterioration
+					if((!deteriorationVar.getText().isEmpty()) && (Double.parseDouble(deteriorationVar.getText()) >= 0)){
+						showAlert("El deterioro solo pueden ser numeros negativos diferentes de 0");
+					}
+					else if(!deteriorationVar.getText().isEmpty()){
+						ppe.addDeterioration(Double.parseDouble(deteriorationVar.getText()));
+					}
+					//Valorization
+					if(!valorizationsVar.getText().isEmpty()){
+						ppe.addValorizations(Double.parseDouble(valorizationsVar.getText()));
+					}
+					
+					identifiers[1] = ppe.getName();
+					generate();
+				}
+				else {
+					showAlert("Completa los espacios vacios");
+				}
+			}
+			catch (AlreadyExistException e) {
+				showAlert("Ya existe un PPE con ese nombre");
+			}
+			catch(NumberFormatException e){
+				showAlert("Coloca datos validos en las casillas");
+			}
+			catch (NotOwnedException e) {
+				showAlert("No posees este item");
+			}
+			
+		});
+		//~...
+		header.getChildren().addAll(back,ppeName,edit);
+		//...
 		
 	}
 	
 	//Supporters
-	public void editPPE() {
-		
+	public String formatMoney(Object money) {
+		NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
+		String displayMoney = format.format(money);
+		return displayMoney;
 	}
 	
-	public void saveData(Stage stage){
-		stage.setOnCloseRequest(event -> {
-			
-		});
+	public void timelineHeader(GridPane grid) {
+		Label name=new Label("Nombre");
+		name.setMaxWidth(Double.MAX_VALUE);
+		name.setMaxHeight(Double.MAX_VALUE);
+		name.getStyleClass().add("title");
+		grid.add(name, 0, 0);
+		
+		Label date=new Label("Fecha");
+		date.setMaxWidth(Double.MAX_VALUE);
+		date.setMaxHeight(Double.MAX_VALUE);
+		date.getStyleClass().add("title");
+		grid.add(date, 1, 0);
+		
+		Label historico=new Label("Valor Historico");
+		historico.setMaxWidth(Double.MAX_VALUE);
+		historico.setMaxHeight(Double.MAX_VALUE);
+		historico.getStyleClass().add("title");
+		grid.add(historico, 2, 0);
+		
+		Label unitHistorico=new Label("Valor Unitario Historico");
+		unitHistorico.setMaxWidth(Double.MAX_VALUE);
+		unitHistorico.setMaxHeight(Double.MAX_VALUE);
+		unitHistorico.getStyleClass().add("title");
+		grid.add(unitHistorico, 3, 0);
+		
+		Label depre=new Label("Depreciacion Acumulada");
+		depre.setMaxWidth(Double.MAX_VALUE);
+		depre.setMaxHeight(Double.MAX_VALUE);
+		depre.getStyleClass().add("title");
+		grid.add(depre, 4, 0);
+		
+		Label deter=new Label("Deterioro Acumulado");
+		deter.setMaxWidth(Double.MAX_VALUE);
+		deter.setMaxHeight(Double.MAX_VALUE);
+		deter.getStyleClass().add("title");
+		grid.add(deter, 5, 0);
+		
+		Label valor=new Label("Valorizacion Acumulada");
+		valor.setMaxWidth(Double.MAX_VALUE);
+		valor.setMaxHeight(Double.MAX_VALUE);
+		valor.getStyleClass().add("title");
+		grid.add(valor, 6, 0);
+		
+		Label net=new Label("Valor Neto");
+		net.setMaxWidth(Double.MAX_VALUE);
+		net.setMaxHeight(Double.MAX_VALUE);
+		net.getStyleClass().add("title");
+		grid.add(net, 7, 0);
+		
+		Label unitNet=new Label("Valor Unitario Neto");
+		unitNet.setMaxWidth(Double.MAX_VALUE);
+		unitNet.setMaxHeight(Double.MAX_VALUE);
+		unitNet.getStyleClass().add("title");
+		grid.add(unitNet, 8, 0);
 	}
 	
 	public TextField onActionAddButton(Button add){
@@ -736,6 +1093,7 @@ public class ControlMenu implements Initializable{
 		Alert alert = new Alert(AlertType.NONE, message, ok);
 		alert.setHeaderText(null);
 		alert.setTitle(null);
+		alert.initStyle(StageStyle.UNDECORATED);
 		
 		DialogPane dialogPane = alert.getDialogPane();
 		dialogPane.getStylesheets().add(getClass().getResource("/view/Style.css").toExternalForm());
@@ -791,4 +1149,105 @@ public class ControlMenu implements Initializable{
 		itemMenu = new ContextMenu();
 	}
 	
+	public void saveData(Stage stage){
+		stage.setOnCloseRequest(event -> {
+			accountant.save();
+		});
+	}
+	
+	public void generateSearchList(ArrayList<PPE> ppes, String label) {
+		for(int i=0; i<ppes.size(); i++){
+			PPE ppe = ppes.get(i);
+			ppe.depreciated();
+			HBox itemBox=generateItemBox(ppe.toString(), identifiers[0]+"/"+ppe.getName()+".png", "PPE.png");
+			
+			//State
+			String state=ppe.getState().toString();
+			itemBox.getChildren().add(new Label(state));
+			//...
+			
+			//State
+			itemBox.getChildren().add(new Label(label));
+			//...
+			
+			//OnAction
+			itemBox.setOnMouseClicked(event->{
+				
+				//Open
+				if(event.getButton()==MouseButton.PRIMARY){
+					boolean run = true;
+					
+					for(int j = 0; (j < accountant.getCategories().size()) && run; j++){
+						for(int k = 0; (k < accountant.getCategories().get(j).getPpes().size()) && run; k++){
+							
+							if(accountant.getCategories().get(j).getPpes().get(k).equals(ppe)) {
+								this.identifiers[0] = accountant.getCategories().get(j).getName();
+								this.identifiers[1] = ppe.getName();
+								
+								run = false;
+							}
+							
+						}
+					}
+					
+					generate();
+				}
+				//...
+				//Option Menu
+				else if(event.getButton()==MouseButton.SECONDARY){
+					
+					generateItemMenu();
+					//Sell
+					MenuItem delete = new MenuItem("Vender");
+			        delete.setOnAction(dEvent->{
+			        	try {
+							ppe.sell();
+						}
+			        	catch (NotOwnedException e) {
+							showAlert("No posees este PPE");
+						}
+			        	generate();
+			        });
+					//...
+			        
+			        //Image
+			        MenuItem image = new MenuItem("Cambiar Imagen");
+			        image.setOnAction(eEvent->{
+			        	//Choose File
+			        	Stage stage = (Stage) pane.getScene().getWindow();
+				        FileChooser fileChooser = new FileChooser();
+						fileChooser.setTitle("Image Selector");
+						fileChooser.getExtensionFilters().add(new ExtensionFilter("PNG", "*.png"));
+						File imageFile=fileChooser.showOpenDialog(stage);
+						//...
+						//CreateDir
+						new File(ICONS_PATH+identifiers[0]).mkdir();
+						//...
+						//Delete
+						File newImageFile=new File(ICONS_PATH+identifiers[0]+"/"+ppe.getName()+".png");
+						newImageFile.delete();
+						//...
+						//Change
+						if(imageFile!=null){
+							imageFile.renameTo(newImageFile);
+						}
+						generate();
+						//...
+						
+			        });
+			        //...
+			        
+			        itemMenu.getItems().addAll(delete, image);
+			        itemMenu.show(itemBox, event.getScreenX(), event.getScreenY());
+			        
+				}
+				//...
+				
+			});
+			//...
+			
+			list.getItems().add(itemBox);
+			
+		}
+	}
 }

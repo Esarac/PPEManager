@@ -1,13 +1,17 @@
 package model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 
 import exception.AlreadyExistException;
 import exception.NotOwnedException;
 
-public class Category{
+public class Category implements Serializable{
 
+	//Constants
+	private static final long serialVersionUID = 1L;
+	
 	//Attributes
 	private String name;
 	private ArrayList<PPE> ppes;
