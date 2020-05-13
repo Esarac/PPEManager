@@ -57,9 +57,9 @@
 }
 
 .table-view .column-header .label {
-	-fx-text-fill:-item-highlight;
+	-fx-text-fill: -item-highlight;
 	-fx-font-weight: bold;
-	-fx-font-size:17;
+	-fx-font-size: 17;
 	-fx-alignment: center;
 }
 
@@ -69,6 +69,8 @@
 
 .table-view .table-cell{
     -fx-text-fill: white;
+    -fx-alignment: center;
+    -fx-font-weight: bold;
 }
 
 .table-row-cell{
@@ -98,6 +100,23 @@
  
 .table-row-cell:empty .table-cell {
     -fx-border-width: 0px;
+}
+
+.table-view *.scroll-bar:horizontal *.increment-button,
+.table-view *.scroll-bar:horizontal *.decrement-button {
+    -fx-background-color: null;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.table-view *.scroll-bar:horizontal *.increment-arrow, 
+.table-view *.scroll-bar:horizontal *.decrement-arrow {
+    -fx-background-color: null;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-shape: null;
 }
 
 /*~Button~*/

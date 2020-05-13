@@ -20,6 +20,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -45,14 +46,16 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.FileChooser.ExtensionFilter;
 import model.Accountant;
 import model.Category;
 import model.PPE;
+import model.PPE.State;
 
-public class ControlMenu implements Initializable{
+public class ControlMenu implements Initializable {
 	
 	//Constants
 	public final static String BACK_SYMBOL="«";
@@ -809,79 +812,21 @@ public class ControlMenu implements Initializable{
 		information.setSpacing(5);
 		information.setAlignment(Pos.CENTER);
 		pane.setPadding(new Insets(0, 0, 0, 0));
-		information.setPadding(new Insets(50, 0, 0, 0));
+		information.setPadding(new Insets(10, 0, 0, 0));
 		pane.getChildren().add(0, information);
 		
 		TableView<PPETableView> table = new TableView<>();
 		table.setEditable(false);
+		Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+		table.setPrefHeight(visualBounds.getHeight());
+		table.setPrefWidth(visualBounds.getWidth());
+		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 		
 		createColumns(table);
 		
 		information.getChildren().add(table);
 		
 		addData(table);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public void createColumns(TableView<PPETableView> tableView) {
-		
-		TableColumn<PPETableView, String> name = new TableColumn<>("Nombre");
-		name.setMinWidth(177.5);
-		name.setCellValueFactory(new PropertyValueFactory<>("name"));
-		name.setSortable(false);
-		
-		TableColumn<PPETableView, String> date = new TableColumn<>("Fecha");
-		date.setMinWidth(120);
-		date.setCellValueFactory(new PropertyValueFactory<>("date"));
-		date.setSortable(false);
-		
-		TableColumn<PPETableView, String> historic = new TableColumn<>("Valor Historico");
-		historic.setMinWidth(200);
-		historic.setCellValueFactory(new PropertyValueFactory<>("historic"));
-		historic.setSortable(false);
-		
-		TableColumn<PPETableView, String> unitHistoric = new TableColumn<>("Valor Unitario Historico");
-		unitHistoric.setMinWidth(250);
-		unitHistoric.setCellValueFactory(new PropertyValueFactory<>("unitHistoric"));
-		unitHistoric.setSortable(false);
-		
-		TableColumn<PPETableView, String> depretation = new TableColumn<>("Depreciacion Acumulada");
-		depretation.setMinWidth(265);
-		depretation.setCellValueFactory(new PropertyValueFactory<>("depretation"));
-		depretation.setSortable(false);
-		
-		TableColumn<PPETableView, String> damaged = new TableColumn<>("Deterioro Acumulado");
-		damaged.setMinWidth(270);
-		damaged.setCellValueFactory(new PropertyValueFactory<>("damaged"));
-		damaged.setSortable(false);
-		
-		TableColumn<PPETableView, String> valorization = new TableColumn<>("Valorizacion");
-		valorization.setMinWidth(200);
-		valorization.setCellValueFactory(new PropertyValueFactory<>("valorization"));
-		valorization.setSortable(false);
-		
-		TableColumn<PPETableView, String> net = new TableColumn<>("Valor Neto");
-		net.setMinWidth(215);
-		net.setCellValueFactory(new PropertyValueFactory<>("net"));
-		net.setSortable(false);
-		
-		TableColumn<PPETableView, String> unitNet= new TableColumn<>("Valor Unitario Neto");
-		unitNet.setMinWidth(220);
-		unitNet.setCellValueFactory(new PropertyValueFactory<>("unitNet"));
-		unitNet.setSortable(false);
-		
-		tableView.getColumns().addAll(name, date, historic, unitHistoric, depretation, damaged, valorization, net, unitNet);
-	}
-	
-	public void addData(TableView<PPETableView> tableView) {
-		String[][] table = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]).showDepreciationReport();
-		ObservableList<PPETableView> data = FXCollections.observableArrayList();
-		
-		for(int i = 0; i < table.length; i++) {
-			data.add(new PPETableView(table[i][0], table[i][1], formatMoney(Double.parseDouble(table[i][2])), formatMoney(Double.parseDouble(table[i][3])), formatMoney(Double.parseDouble(table[i][4])), formatMoney(Double.parseDouble(table[i][5])), formatMoney(Double.parseDouble(table[i][6])), formatMoney(Double.parseDouble(table[i][7])), formatMoney(Double.parseDouble(table[i][8]))));
-		}
-		
-		tableView.setItems(data);
 	}
 	
 	public void generatePPEEditor() {
@@ -968,27 +913,39 @@ public class ControlMenu implements Initializable{
 			
 			try {
 				
-				if((!ppeName.getText().isEmpty()) && (!entrustedVar.getText().isEmpty())){
-					//Edit
-					accountant.searchCategory(identifiers[0]).editPPE(ppe, ppeName.getText(), entrustedVar.getText(), descriptionVar.getText());
-					
-					//Deterioration
-					if((!deteriorationVar.getText().isEmpty()) && (Double.parseDouble(deteriorationVar.getText()) >= 0)){
-						showAlert("El deterioro solo pueden ser numeros negativos diferentes de 0");
-					}
-					else if(!deteriorationVar.getText().isEmpty()){
-						ppe.addDeterioration(Double.parseDouble(deteriorationVar.getText()));
-					}
-					//Valorization
-					if(!valorizationsVar.getText().isEmpty()){
-						ppe.addValorizations(Double.parseDouble(valorizationsVar.getText()));
-					}
-					
-					identifiers[1] = ppe.getName();
-					generate();
+				if((ppeName.getText().isEmpty()) || (entrustedVar.getText().isEmpty())){
+					showAlert("Completa los espacios vacios");
+				}
+				else if((!deteriorationVar.getText().isEmpty()) && (Double.parseDouble(deteriorationVar.getText()) > 0)){
+					showAlert("El deterioro solo pueden ser numeros negativos");
 				}
 				else {
-					showAlert("Completa los espacios vacios");
+					//Dat
+					double deteriorationDat = 0;
+					if(!deteriorationVar.getText().isEmpty()) {
+						deteriorationDat = Double.parseDouble(deteriorationVar.getText());
+					}
+					
+					double valorizationDat = 0;
+					if(!valorizationsVar.getText().isEmpty()){
+						valorizationDat = Double.parseDouble(valorizationsVar.getText());
+					}
+					if(deteriorationDat != 0 && !(ppe.getState().equals(State.OWNED)) ) {
+						throw new NotOwnedException();
+					}
+					//Deterioration
+					if(deteriorationDat != 0){
+						ppe.addDeterioration(deteriorationDat);
+					}
+					//Valorization
+					if(valorizationDat != 0){
+						ppe.addValorizations(valorizationDat);
+					}
+					
+					//Edit
+					accountant.searchCategory(identifiers[0]).editPPE(ppe, ppeName.getText(), entrustedVar.getText(), descriptionVar.getText());
+					identifiers[1] = ppe.getName();
+					generate();
 				}
 			}
 			catch (AlreadyExistException e) {
@@ -1009,66 +966,72 @@ public class ControlMenu implements Initializable{
 	}
 	
 	//Supporters
+	@SuppressWarnings("unchecked")
+	public void createColumns(TableView<PPETableView> tableView) {
+		
+		TableColumn<PPETableView, String> name = new TableColumn<>("Nombre");
+		name.setMinWidth(177.5);
+		name.setCellValueFactory(new PropertyValueFactory<>("name"));
+		name.setSortable(false);
+		
+		TableColumn<PPETableView, String> date = new TableColumn<>("Fecha");
+		date.setMinWidth(120);
+		date.setCellValueFactory(new PropertyValueFactory<>("date"));
+		date.setSortable(false);
+		
+		TableColumn<PPETableView, String> historic = new TableColumn<>("Valor Historico");
+		historic.setMinWidth(200);
+		historic.setCellValueFactory(new PropertyValueFactory<>("historic"));
+		historic.setSortable(false);
+		
+		TableColumn<PPETableView, String> unitHistoric = new TableColumn<>("Valor Unitario Historico");
+		unitHistoric.setMinWidth(250);
+		unitHistoric.setCellValueFactory(new PropertyValueFactory<>("unitHistoric"));
+		unitHistoric.setSortable(false);
+		
+		TableColumn<PPETableView, String> depretation = new TableColumn<>("Depreciacion Acumulada");
+		depretation.setMinWidth(265);
+		depretation.setCellValueFactory(new PropertyValueFactory<>("depretation"));
+		depretation.setSortable(false);
+		
+		TableColumn<PPETableView, String> damaged = new TableColumn<>("Deterioro Acumulado");
+		damaged.setMinWidth(270);
+		damaged.setCellValueFactory(new PropertyValueFactory<>("damaged"));
+		damaged.setSortable(false);
+		
+		TableColumn<PPETableView, String> valorization = new TableColumn<>("Valorizacion");
+		valorization.setMinWidth(200);
+		valorization.setCellValueFactory(new PropertyValueFactory<>("valorization"));
+		valorization.setSortable(false);
+		
+		TableColumn<PPETableView, String> net = new TableColumn<>("Valor Neto");
+		net.setMinWidth(215);
+		net.setCellValueFactory(new PropertyValueFactory<>("net"));
+		net.setSortable(false);
+		
+		TableColumn<PPETableView, String> unitNet= new TableColumn<>("Valor Unitario Neto");
+		unitNet.setMinWidth(220);
+		unitNet.setCellValueFactory(new PropertyValueFactory<>("unitNet"));
+		unitNet.setSortable(false);
+		
+		tableView.getColumns().addAll(name, date, historic, unitHistoric, depretation, damaged, valorization, net, unitNet);
+	}
+	
+	public void addData(TableView<PPETableView> tableView) {
+		String[][] table = accountant.searchCategory(identifiers[0]).searchPPE(identifiers[1]).showDepreciationReport();
+		ObservableList<PPETableView> data = FXCollections.observableArrayList();
+		
+		for(int i = 0; i < table.length; i++) {
+			data.add(new PPETableView(table[i][0], table[i][1], formatMoney(Double.parseDouble(table[i][2])), formatMoney(Double.parseDouble(table[i][3])), formatMoney(Double.parseDouble(table[i][4])), formatMoney(Double.parseDouble(table[i][5])), formatMoney(Double.parseDouble(table[i][6])), formatMoney(Double.parseDouble(table[i][7])), formatMoney(Double.parseDouble(table[i][8]))));
+		}
+		
+		tableView.setItems(data);
+	}
+	
 	public String formatMoney(Object money) {
 		NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
 		String displayMoney = format.format(money);
 		return displayMoney;
-	}
-	
-	public void timelineHeader(GridPane grid) {
-		Label name=new Label("Nombre");
-		name.setMaxWidth(Double.MAX_VALUE);
-		name.setMaxHeight(Double.MAX_VALUE);
-		name.getStyleClass().add("title");
-		grid.add(name, 0, 0);
-		
-		Label date=new Label("Fecha");
-		date.setMaxWidth(Double.MAX_VALUE);
-		date.setMaxHeight(Double.MAX_VALUE);
-		date.getStyleClass().add("title");
-		grid.add(date, 1, 0);
-		
-		Label historico=new Label("Valor Historico");
-		historico.setMaxWidth(Double.MAX_VALUE);
-		historico.setMaxHeight(Double.MAX_VALUE);
-		historico.getStyleClass().add("title");
-		grid.add(historico, 2, 0);
-		
-		Label unitHistorico=new Label("Valor Unitario Historico");
-		unitHistorico.setMaxWidth(Double.MAX_VALUE);
-		unitHistorico.setMaxHeight(Double.MAX_VALUE);
-		unitHistorico.getStyleClass().add("title");
-		grid.add(unitHistorico, 3, 0);
-		
-		Label depre=new Label("Depreciacion Acumulada");
-		depre.setMaxWidth(Double.MAX_VALUE);
-		depre.setMaxHeight(Double.MAX_VALUE);
-		depre.getStyleClass().add("title");
-		grid.add(depre, 4, 0);
-		
-		Label deter=new Label("Deterioro Acumulado");
-		deter.setMaxWidth(Double.MAX_VALUE);
-		deter.setMaxHeight(Double.MAX_VALUE);
-		deter.getStyleClass().add("title");
-		grid.add(deter, 5, 0);
-		
-		Label valor=new Label("Valorizacion Acumulada");
-		valor.setMaxWidth(Double.MAX_VALUE);
-		valor.setMaxHeight(Double.MAX_VALUE);
-		valor.getStyleClass().add("title");
-		grid.add(valor, 6, 0);
-		
-		Label net=new Label("Valor Neto");
-		net.setMaxWidth(Double.MAX_VALUE);
-		net.setMaxHeight(Double.MAX_VALUE);
-		net.getStyleClass().add("title");
-		grid.add(net, 7, 0);
-		
-		Label unitNet=new Label("Valor Unitario Neto");
-		unitNet.setMaxWidth(Double.MAX_VALUE);
-		unitNet.setMaxHeight(Double.MAX_VALUE);
-		unitNet.getStyleClass().add("title");
-		grid.add(unitNet, 8, 0);
 	}
 	
 	public TextField onActionAddButton(Button add){

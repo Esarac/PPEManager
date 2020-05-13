@@ -22,7 +22,7 @@ public class Main extends Application{
 			Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
 			root.setPrefHeight(visualBounds.getHeight());
 			root.setPrefWidth(visualBounds.getWidth());
-			primaryStage.getIcons().add(new Image("file:../../med/icon/Logo.png"));
+			primaryStage.getIcons().add(new Image("file:../../med/icon/default/logo.png"));
 			primaryStage.setTitle("PPE Manager");
 			primaryStage.setScene(new Scene(root, visualBounds.getWidth(), visualBounds.getHeight()));
 			primaryStage.setMaximized(true);
