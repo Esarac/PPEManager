@@ -5,15 +5,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import exception.AlreadyExistException;
 import exception.NotOwnedException;
 import exception.NotRemovableException;
 
-public class Accountant {
+public class Accountant implements Serializable{
 
-	public final static String DATA_PATH = "dat/info.al";
+	//Constants
+	private static final long serialVersionUID = 1L;
+	public final static String DATA_PATH = "dat/ppe.app";
 	
 	//Attributes
 	private String name;
@@ -129,7 +132,9 @@ public class Accountant {
 		try{
 			FileInputStream file=new FileInputStream(DATA_PATH);
 			ObjectInputStream creator=new ObjectInputStream(file);
-			this.categories=(ArrayList<Category>)creator.readObject();
+			Accountant me = (Accountant)creator.readObject();
+			this.name = me.getName();
+			this.categories = me.getCategories();
 			creator.close();
 		}
 		catch (IOException e) {save();} 
@@ -141,10 +146,15 @@ public class Accountant {
 		try {
 			FileOutputStream file=new FileOutputStream(DATA_PATH);
 			ObjectOutputStream creator=new ObjectOutputStream(file);
-			creator.writeObject(categories);
+			creator.writeObject(this);
 			creator.close();
 		}
 		catch (IOException e) {}
+	}
+	
+		//Set
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 		//Get

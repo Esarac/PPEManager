@@ -42,7 +42,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -244,6 +243,50 @@ public class ControlMenu implements Initializable {
 		//~APP NAME
 		Label accountantName=new Label(accountant.getName());
 		accountantName.getStyleClass().add("title");
+		accountantName.setOnMouseClicked(event->{
+			if(event.getButton()==MouseButton.SECONDARY){
+				generateItemMenu();
+				
+				//Edit
+		        MenuItem name = new MenuItem("Cambiar Nombre");
+				name.setOnAction(eEvent->{
+		        	Node nameNode=header.getChildren().get(1);
+		        	header.getChildren().remove(1);
+		        	
+		        	//toTextField
+		        	if(nameNode instanceof Label){
+			        	TextField tfName=new TextField(accountant.getName());
+			        	header.getChildren().add(1,tfName);
+			        	
+			        	tfName.setOnKeyPressed(kEvent->{
+			        		
+			        		if(kEvent.getCode().equals(KeyCode.ENTER)){
+			        			if(!tfName.getText().isEmpty()){
+			        				accountant.setName(tfName.getText());
+			        				generate();
+			        			}
+			        			else {
+			        				showAlert("Rellena el espeacio vacio");
+			        			}
+								
+			        		}
+			        		
+			        	});
+		        	}
+		        	//...
+		        	//toLabel
+		        	else if(nameNode instanceof TextField){
+			        	header.getChildren().add(1, new Label(accountant.getName()));
+		        	}
+		        	//...
+		        	
+				});
+		        //...
+				
+				itemMenu.getItems().add(name);
+		        itemMenu.show(header, event.getScreenX(), event.getScreenY());
+			}
+		});
 		//~...
 		
 		//~ADD
@@ -304,7 +347,7 @@ public class ControlMenu implements Initializable {
 			        //...
 			        
 			        //Edit
-			        MenuItem name = new MenuItem("Cambiar Name");
+			        MenuItem name = new MenuItem("Cambiar Nombre");
 					name.setOnAction(eEvent->{
 			        	Node nameNode=itemBox.getChildren().get(1);
 			        	itemBox.getChildren().remove(1);
